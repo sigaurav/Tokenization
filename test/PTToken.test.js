@@ -14,15 +14,19 @@ contract("Token Test", async(accounts) => {
 
     const [deployerAccount, recipient, anotherAccount] = accounts;
 
+    beforeEach(async() => {
+        this.myToken = await Token.new(1000000);
+    });
+
     it("All tokens should be in deployer's account", async() => {
-        let instance = await Token.deployed();
+        let instance = this.myToken;
         let totalSupply = await instance.totalSupply();
         expect(instance.balanceOf(deployerAccount)).to.eventually.be.a.bignumber.equal(totalSupply);
     });
 
     it("Is possible to send tokens between accounts", async() => {
         const sendToken = 1;
-        let instance = await Token.deployed();
+        let instance = this.myToken;
         let totalSupply = await instance.totalSupply();
         await expect(instance.balanceOf(deployerAccount)).to.eventually.be.a.bignumber.equal(totalSupply);
         await expect(instance.transfer(recipient, sendToken)).to.eventually.be.fulfilled;
@@ -33,7 +37,7 @@ contract("Token Test", async(accounts) => {
     }); 
 
     it("Should not be able to send more token than available with owner", async() => {
-        let instance = await Token.deployed();
+        let instance = this.myToken;
         let balanceOfDeployer = await instance.balanceOf(deployerAccount);
         await expect(instance.transfer(recipient, new BN(balanceOfDeployer+1))).to.eventually.be.rejected;
         await expect(instance.balanceOf(deployerAccount)).to.eventually.be.a.bignumber.equal(balanceOfDeployer);
