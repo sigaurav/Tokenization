@@ -1,27 +1,23 @@
 const Token = artifacts.require("PTToken");
 
-var chai = require("chai");
+const chai = require("./setupChai.js");
 const BN = web3.utils.BN;
-const chaiBN = require('chai-bn')(BN);
-chai.use(chaiBN);
-
-var chaiAsPromised = require("chai-as-promised");
-chai.use(chaiAsPromised);
-
 const expect = chai.expect;
+
+require("dotenv").config({path:"../.env"});
 
 contract("Token Test", async(accounts) => {
 
     const [deployerAccount, recipient, anotherAccount] = accounts;
 
     beforeEach(async() => {
-        this.myToken = await Token.new(1000000);
+        this.myToken = await Token.new(process.env.INITIAL_TOKENS);
     });
 
     it("All tokens should be in deployer's account", async() => {
         let instance = this.myToken;
         let totalSupply = await instance.totalSupply();
-        expect(instance.balanceOf(deployerAccount)).to.eventually.be.a.bignumber.equal(totalSupply);
+        return await expect(instance.balanceOf(deployerAccount)).to.eventually.be.a.bignumber.equal(totalSupply);
     });
 
     it("Is possible to send tokens between accounts", async() => {
@@ -33,14 +29,14 @@ contract("Token Test", async(accounts) => {
 
         
         await expect(instance.balanceOf(deployerAccount)).to.eventually.be.a.bignumber.equal(totalSupply.sub(new BN(sendToken)));
-        await expect(instance.balanceOf(recipient)).to.eventually.be.a.bignumber.equal(new BN(sendToken));
+        return await expect(instance.balanceOf(recipient)).to.eventually.be.a.bignumber.equal(new BN(sendToken));
     }); 
 
     it("Should not be able to send more token than available with owner", async() => {
         let instance = this.myToken;
         let balanceOfDeployer = await instance.balanceOf(deployerAccount);
         await expect(instance.transfer(recipient, new BN(balanceOfDeployer+1))).to.eventually.be.rejected;
-        await expect(instance.balanceOf(deployerAccount)).to.eventually.be.a.bignumber.equal(balanceOfDeployer);
+        return await expect(instance.balanceOf(deployerAccount)).to.eventually.be.a.bignumber.equal(balanceOfDeployer);
     });
 
 });
